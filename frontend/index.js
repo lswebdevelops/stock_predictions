@@ -1,38 +1,38 @@
-const messages = [
-    {
-        role: 'system',
-        content: 'You are an expert in quantum computing.'
-    },
-    {
-        role: 'user',
-        content: 'I am 10 years old, so don´t push. I want to know about quantum computing. write max 100 words.'
+// index.js
+async function getGeneratedText() {
+  try {
+    const response = await fetch('http://localhost:3000/api/hf/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: 'Hello! How are you today?' })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      document.getElementById('response-text').textContent = `Error: ${errorData.error}`;
+      return;
     }
-];
-
-async function getOpenAIChatResponse() {
-    try {
-        const response = await fetch('http://localhost:3000/api/openai/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ messages }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Error from backend:', errorData);
-            document.getElementById('response-container').textContent = `Error: ${errorData.error}`;
-            return;
-        }
-
-        const data = await response.json();
-        console.log('Response from OpenAI:', data);
-        document.getElementById('response-container').textContent = JSON.stringify(data.choices[0].message.content, null, 2);
-    } catch (error) {
-        console.error('Error fetching data:', error);
-        document.getElementById('response-container').textContent = 'Failed to connect to the server.';
+    
+    const data = await response.json();
+    console.log('Full response:', data); // Debug log
+    
+    // Handle conversational response format
+    let generatedText;
+    if (data.conversation && data.conversation.generated_responses && data.conversation.generated_responses.length > 0) {
+      generatedText = data.conversation.generated_responses[data.conversation.generated_responses.length - 1];
+    } else if (data.generated_text) {
+      generatedText = data.generated_text;
+    } else {
+      generatedText = JSON.stringify(data, null, 2); // Show formatted raw response for debugging
     }
+    
+    document.getElementById('response-text').textContent = generatedText;
+    
+  } catch (error) {
+    console.error('Error:', error);
+    document.getElementById('response-text').textContent = 'Error: Could not reach server.';
+  }
 }
 
-getOpenAIChatResponse();
+// Call the function when page loads
+getGeneratedText();
